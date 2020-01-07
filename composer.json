@@ -1,0 +1,24 @@
+{
+    "name": "janpantel/laravel-fluent-plus",
+    "description": "A package that adds useful helpers to Laravel's Fluent class",
+    "type": "library",
+    "require": {
+        "php": "^7.3",
+        "illuminate/support": "^6.8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.5"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jan-Oliver Pantel",
+            "email": "janpantel@users.noreply.github.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "JanPantel\\LaravelFluentPlus\\": "src/"
+        }
+    }
+}
