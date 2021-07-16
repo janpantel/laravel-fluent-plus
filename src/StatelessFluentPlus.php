@@ -3,11 +3,12 @@
 namespace JanPantel\LaravelFluentPlus;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Fluent;
 use JanPantel\LaravelFluentPlus\Transformers\ArrayTransformer;
-use JanPantel\LaravelFluentPlus\Transformers\CollectionTransformer;
 use JanPantel\LaravelFluentPlus\Transformers\ObjectTransformer;
 use JanPantel\LaravelFluentPlus\Transformers\TransformerInterface;
+use JanPantel\LaravelFluentPlus\Transformers\CollectionTransformer;
 
 /**
  * Class StatelessFluentPlus
@@ -138,5 +139,59 @@ class StatelessFluentPlus extends Fluent
             /** @var TransformerInterface $caster */
             return $caster->handles($castDefinition, $value);
         });
+    }
+
+
+    /**
+     * Get an attribute from the fluent instance.
+     * Updated to support dot notation
+     *
+     * @param  string  $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    public function get($key, $default = null)
+    {
+        if (is_string($key) && Str::contains($key, '.')) {
+            return $this->getRecursive($key, null, $default);
+        }
+
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->attributes[$key];
+        }
+
+        return value($default);
+    }
+
+    /**
+     * Recursively get an attribute from the fluent instance using dot notation.
+     *
+     * @param  string  $key
+     * @param  mixed  $offest
+     * @param  mixed  $default
+     * @return mixed
+     */
+    protected function getRecursive($key, $offset = null, $default = null)
+    {
+        if (is_null($offset)) {
+            $offset = $this->attributes;
+        }
+
+        if (Str::contains($key, '.')) {
+            $keys = explode('.', $key);
+            $key  = array_shift($keys);
+            $next = count($keys) ? implode('.', $keys) : '';
+
+            if ($next) {
+                return $this->getRecursive($next, $offset[$key], $default);
+            }
+        }
+
+        # Using `isset()` to support both arrays & fluent !
+        if (isset($offset[$key])) {
+            return $offset[$key];
+        }
+
+        return value($default);
     }
 }
