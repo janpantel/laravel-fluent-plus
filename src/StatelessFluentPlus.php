@@ -95,8 +95,14 @@ class StatelessFluentPlus extends Fluent
 
             if (is_null($transformer)) {
                 $transformer = function ($castDefinition, $value) use ($isRecursive) {
-                    if ($isRecursive && is_array($value) && Arr::isAssoc($value)) {
-                        return new FluentPlus($value);
+                    if ($isRecursive && is_array($value)) {
+                        if (Arr::isAssoc($value)) {
+                            return new FluentPlus($value);
+                        } else {
+                            return collect($value)->map(function ($child) {
+                                return is_array($child) ? new FluentPlus($child) : $child;
+                            });
+                        }
                     }
                     return $value;
                 };
@@ -124,8 +130,7 @@ class StatelessFluentPlus extends Fluent
      */
     private static function findTransformer($castDefinition, $casters, $value)
     {
-        if ($castDefinition instanceof \Closure || $castDefinition instanceof TransformerInterface)
-        {
+        if ($castDefinition instanceof \Closure || $castDefinition instanceof TransformerInterface) {
             return $castDefinition;
         }
 
