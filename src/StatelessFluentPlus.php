@@ -194,4 +194,37 @@ class StatelessFluentPlus extends Fluent
 
         return value($default);
     }
+
+
+    /**
+     * Check if a given key exists in the attributes
+     *
+     * @return bool
+     */
+    public function has(string $key)
+    {
+        return isset($this->attributes[$key]);
+    }
+
+
+    /**
+     * Returns true if the Fluent is empty, false otherwise
+     *
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return empty($this->attributes);
+    }
+
+    
+    /**
+     * Returns true if the Fluent is not empty, false otherwise
+     *
+     * @return bool
+     */
+    public function isNotEmpty()
+    {
+        return ! $this->isEmpty();
+    }
 }
