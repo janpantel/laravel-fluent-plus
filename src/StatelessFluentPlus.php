@@ -3,11 +3,12 @@
 namespace JanPantel\LaravelFluentPlus;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Fluent;
 use JanPantel\LaravelFluentPlus\Transformers\ArrayTransformer;
-use JanPantel\LaravelFluentPlus\Transformers\CollectionTransformer;
 use JanPantel\LaravelFluentPlus\Transformers\ObjectTransformer;
 use JanPantel\LaravelFluentPlus\Transformers\TransformerInterface;
+use JanPantel\LaravelFluentPlus\Transformers\CollectionTransformer;
 
 /**
  * Class StatelessFluentPlus
@@ -95,8 +96,14 @@ class StatelessFluentPlus extends Fluent
 
             if (is_null($transformer)) {
                 $transformer = function ($castDefinition, $value) use ($isRecursive) {
-                    if ($isRecursive && is_array($value) && Arr::isAssoc($value)) {
-                        return new FluentPlus($value);
+                    if ($isRecursive && is_array($value)) {
+                        if (Arr::isAssoc($value)) {
+                            return new FluentPlus($value);
+                        } else {
+                            return collect($value)->map(function ($child) {
+                                return is_array($child) ? new FluentPlus($child) : $child;
+                            });
+                        }
                     }
                     return $value;
                 };
@@ -124,8 +131,7 @@ class StatelessFluentPlus extends Fluent
      */
     private static function findTransformer($castDefinition, $casters, $value)
     {
-        if ($castDefinition instanceof \Closure || $castDefinition instanceof TransformerInterface)
-        {
+        if ($castDefinition instanceof \Closure || $castDefinition instanceof TransformerInterface) {
             return $castDefinition;
         }
 
@@ -133,5 +139,92 @@ class StatelessFluentPlus extends Fluent
             /** @var TransformerInterface $caster */
             return $caster->handles($castDefinition, $value);
         });
+    }
+
+
+    /**
+     * Get an attribute from the fluent instance.
+     * Updated to support dot notation
+     *
+     * @param  string  $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    public function get($key, $default = null)
+    {
+        if (is_string($key) && Str::contains($key, '.')) {
+            return $this->getRecursive($key, null, $default);
+        }
+
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->attributes[$key];
+        }
+
+        return value($default);
+    }
+
+    /**
+     * Recursively get an attribute from the fluent instance using dot notation.
+     *
+     * @param  string  $key
+     * @param  mixed  $offest
+     * @param  mixed  $default
+     * @return mixed
+     */
+    protected function getRecursive($key, $offset = null, $default = null)
+    {
+        if (is_null($offset)) {
+            $offset = $this->attributes;
+        }
+
+        if (Str::contains($key, '.')) {
+            $keys = explode('.', $key);
+            $key  = array_shift($keys);
+            $next = count($keys) ? implode('.', $keys) : '';
+
+            if ($next) {
+                return $this->getRecursive($next, $offset[$key], $default);
+            }
+        }
+
+        # Using `isset()` to support both arrays & fluent !
+        if (isset($offset[$key])) {
+            return $offset[$key];
+        }
+
+        return value($default);
+    }
+
+
+    /**
+     * Check if a given key exists in the attributes
+     *
+     * @return bool
+     */
+    public function has(string $key)
+    {
+        return isset($this->attributes[$key]);
+    }
+
+
+    /**
+     * Returns true if the Fluent is empty, false otherwise
+     *
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return empty($this->attributes);
+    }
+
+    
+    /**
+     * Returns true if the Fluent is not empty, false otherwise
+     *
+     * @return bool
+     */
+    public function isNotEmpty()
+    {
+        return ! $this->isEmpty();
     }
 }

@@ -4,7 +4,7 @@
     "type": "library",
     "require": {
         "php": "^7.3",
-        "illuminate/support": "^6.8"
+        "illuminate/support": "^6.8|^7.0|^8.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.5"
@@ -14,6 +14,10 @@
         {
             "name": "Jan-Oliver Pantel",
             "email": "janpantel@users.noreply.github.com"
+        },
+        {
+            "name": "Thomas Georgel",
+            "email": "thomas@hydrat.agency"
         }
     ],
     "autoload": {
